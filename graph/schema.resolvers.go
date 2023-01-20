@@ -7,19 +7,29 @@ package graph
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/florencesarmah/hackernews/graph/model"
+	"github.com/florencesarmah/hackernews/internal/links"
 )
 
 // CreateLink is the resolver for the createLink field.
 func (r *mutationResolver) CreateLink(ctx context.Context, input model.NewLink) (*model.Link, error) {
-	link := model.Link {
+	link := links.Link {
 		Title: input.Title,
 		Address: input.Address,
-		User: &model.User{ Name: "test" },
 	}
 
-	return &link, nil
+	linkID := link.Save()
+	
+	linkModel := model.Link {
+		ID: strconv.FormatInt(linkID, 10),
+		Title: input.Title,
+		Address: input.Address,
+		//User: &model.User{ Name: "test" },	No longer used on https://www.howtographql.com/graphql-go/5-create-and-retrieve-links/
+	}
+
+	return &linkModel, nil
 }
 
 // CreateUser is the resolver for the createUser field.
@@ -39,16 +49,19 @@ func (r *mutationResolver) RefreshToken(ctx context.Context, input model.Refresh
 
 // Links is the resolver for the links field.
 func (r *queryResolver) Links(ctx context.Context) ([]*model.Link, error) {
-	var links []*model.Link
-	
-	dummyLink := model.Link {
-		Title: "our dummy link",
-		Address: "https://address.org",
-		User: &model.User{ Name: "admin" },
-	}
+	var linksModel []*model.Link
 
-	links = append(links, &dummyLink)
-	return links, nil
+	for _,link := range links.GetAll() {
+		linkModel := model.Link {
+			ID: link.ID,
+			Title: link.Title,
+			Address: link.Address,
+			//User: &model.User{ Name: "test" },	No longer used on https://www.howtographql.com/graphql-go/5-create-and-retrieve-links/
+		}
+		linksModel = append(linksModel, &linkModel)
+	}
+	
+	return linksModel, nil
 }
 
 // Mutation returns MutationResolver implementation.

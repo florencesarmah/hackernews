@@ -32,3 +32,34 @@ func (link Link) Save() int64 {
 	log.Print("Row inserted!")
 	return id
 }
+
+func GetAll() []Link {
+	rows, err := database.Db.Query("SELECT id, title, address FROM Links")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer rows.Close()
+
+	var links []Link
+
+	for rows.Next() {
+		var link Link
+		if err := rows.Scan(&link.ID, &link.Title, &link.Address); err != nil {
+            log.Fatal(err)
+        }
+		links = append(links, link)
+	}
+
+	if err = rows.Err(); err != nil {
+        log.Fatal(err)
+    }
+
+	return links
+}
+
+//Não temos ainda o User, então se fizermos um GetAll com SELECT *, ele vai esperar
+//4 colunas no rows.Scan
+//		sql: expected 4 destination arguments in Scan, not 3
+//Como ainda não temos User, não podemos fazer nada nesse momento
+//Para evitar esse erro, especificamos as colunas no SELECT
